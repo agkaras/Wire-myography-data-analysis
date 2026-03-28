@@ -14,8 +14,10 @@ All results land in a single DataFrame (and one Excel sheet): absolute values in
 ## Files
 
 ```
-myograph_colab.ipynb    — main analysis notebook, runs in Google Colab
-sample_data.txt    — synthetic LabChart export for testing
+myograph_colab.ipynb    — Google Colab notebook (upload/download via browser)
+python/myograph.py      — standalone Python script (command line)
+R/myograph.R            — R script (RStudio)
+sample_data.txt    — sample LabChart export for testing
 ```
 
 ## Usage
@@ -23,6 +25,17 @@ sample_data.txt    — synthetic LabChart export for testing
 Open in Google Colab: **File → Open notebook → GitHub**, paste the repo URL, select `myograph_colab.ipynb`. Or download the .ipynb file and upload in Colab.
 
 Run cells in order. The only cell you need to edit is **Step 3**:
+### R script
+ 
+```r
+install.packages(c("ggplot2", "writexl", "scales", "tidyr", "patchwork"))
+source("R/myograph.R")
+```
+ 
+Edit `INPUT_FILE` and `OUTPUT_DIR` at the top of the script before running. The plot opens in the RStudio Plots pane and is also saved as PNG.
+## Settings — the same across all three versions
+ 
+The only section you need to edit is the settings block at the top. All three versions use the same parameters:
 
 ```python
 # Protocol mode
@@ -51,16 +64,15 @@ L_ACH_END     = 'P3'       # rinse after ACh
 L_SNP_END     = 'K'        # end of recording
 ```
 
-If a label doesn't match, the notebook raises a `ValueError` listing all labels actually found in the file — use **Step 2** (comment preview) to check before running the analysis.
+If a label doesn't match, the script raises an error listing all labels actually found in the file. In the Colab notebook, use **Step 2** (comment preview) to check before running the analysis. In Python and R, the comment preview prints automatically at startup.
 
-**Output** (Step 6, downloaded automatically):
-- `<filename>_results.xlsx` — single sheet, metrics as rows, channels as columns
-- `myograph_results.png` — 2×2 summary figure: Phe, ACh, SNP curves + KCl barplot
+## Output
+ 
+- **Excel** — single sheet, metrics as rows (`metric` column), channels as columns (`ch1`–`ch8`). Absolute values (mN) first, percentage values below.
+- **PNG** — 2×2 summary figure: Phe dose-response or bar chart, ACh relaxation (inverted Y), SNP relaxation (inverted Y), KCl viability barplot. Output filename matches the input `.txt` file.
 
 ## Input file format
 
 Standard LabChart tab-separated `.txt` export, decimal comma, 9 header lines. Each channel (1–8) is one aortic ring. Protocol events must be annotated with the `#*` prefix in LabChart (comment option) before export.
 
-## Dependencies
 
-All standard — no install needed in Colab. `openpyxl` is pip-installed automatically in the first cell.
