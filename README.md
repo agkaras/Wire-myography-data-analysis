@@ -1,3 +1,7 @@
+Click below to open in Google colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/agkaras/Wire-myography-data-analysis/blob/main/myograph_colab.ipynb)
+
 Python analysis pipeline for data measured with wire myograph 620M (Danish Myo Technology) exported from LabChart (AD Instruments). Calculates vascular contraction and relaxation responses from `.txt` files and produces summary figures and an Excel results table. Analysis condition: every event (reagent addition, rinse) has to be marked as a comment during recording in LabChart.
 
 ## What it does
