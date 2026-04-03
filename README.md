@@ -27,11 +27,26 @@ sample_data.txt    — sample LabChart export for testing
 ```
 
 ## Usage
+### Colab Notebook
+Click the link on the top of the page or import the notebook file in Google Colab via Github or file upload.
 
-Open in Google Colab: **File → Open notebook → GitHub**, paste the repo URL, select `myograph_colab.ipynb`. Or download the .ipynb file and upload in Colab.
+### Python script (local)
+```python
+pip install numpy pandas matplotlib openpyxl
+```
 
-Run cells in order. The only cell you need to edit is **Step 3**:
-### R script
+Edit `INPUT_FILE` and `OUTPUT_DIR` at the top of `python/myograph.py`, then run:
+```
+python myograph.py
+```
+
+### R script (RStudio)
+```r
+install.packages(c("ggplot2", "writexl", "scales", "tidyr", "patchwork"))
+source("R/myograph.R")
+```
+
+Edit `INPUT_FILE` and `OUTPUT_DIR` at the top of the script before running.
  
 ```r
 install.packages(c("ggplot2", "writexl", "scales", "tidyr", "patchwork"))
@@ -41,14 +56,14 @@ source("R/myograph.R")
 Edit `INPUT_FILE` and `OUTPUT_DIR` at the top of the script before running. The plot opens in the RStudio Plots pane and is also saved as PNG.
 ## Settings — the same across all three versions
  
-The only section you need to edit is the settings block at the top. All three versions use the same parameters:
+The only section you need to edit is the settings block at the top, phenylephrine mode (dose-response or single-dose-induced maximal contraction) and comment labels. All three versions use the same parameters:
 
 ```python
 # Protocol mode
 PHE_MODE = 'dose_response'   # or 'single_dose'
 
 # Cumulative dose labels — match exactly what was typed in LabChart
-PHE_LABELS = ['Phe0,01', 'Phe0,03', 'Phe0,1', 'Phe0,3', 'Phe1', 'Phe3']
+PHE_LABELS = ['Phe0,01', 'Phe0,03', 'Phe0,1', 'Phe0,3', 'Phe1', 'Phe3'] #ignore if you use single_dose
 ACH_LABELS = ['Ach0,001', 'Ach0,01', 'Ach0,1', 'Ach1', 'Ach10']
 SNP_LABELS = ['SNP0,001', 'SNP0,01', 'SNP0,1', 'SNP1']
 
