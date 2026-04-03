@@ -3,6 +3,7 @@ Python analysis pipeline for data measured with wire myograph 620M (Danish Myo T
 ▶️ Run the analysis interactively in your browser (Google Colab — free, no installation):
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/agkaras/Wire-myography-data-analysis/blob/main/myograph_colab.ipynb)
+
 Python and R scripts for local use are also available in this repository.
 
 ## What it does
