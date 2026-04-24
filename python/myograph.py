@@ -4,7 +4,6 @@ Wire Myography Analysis
 Author : Agnieszka Karas, PhD
 Contact: agaakaras@gmail.com | linkedin.com/in/agnieszka-karas
 
-Standalone Python script — equivalent of myograph_colab.ipynb.
 Edit INPUT_FILE, OUTPUT_DIR and the settings block below, then run:
 
     python myograph.py
@@ -15,6 +14,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib.ticker as ticker
+from scipy.optimize import curve_fit
 
 plt.rcParams.update({
     'font.family': 'sans-serif', 'font.size': 10,
@@ -115,7 +116,88 @@ def compute_cumulative_relaxation(df, dose_labels, end_label):
         records.append(baseline - df.iloc[s:e][CHANNEL_COLS].min())
     return pd.DataFrame(records, index=dose_labels)
 
+# ── Curve fitting functions ──────────────────────────────────────────────────────────────
 
+def hill_equation(x, bottom, top, ec50, n):
+    """4-parameter logistic (Hill) equation for dose-response fitting."""
+    return bottom + (top - bottom) / (1 + (ec50 / x) ** n)
+
+
+def fit_dose_response(conc, responses_pct):
+    """
+    Fit Hill equation to dose-response data for each channel.
+
+    Parameters
+    ----------
+    conc : list of float
+        Concentrations (same units as PHE_CONC / ACH_CONC / SNP_CONC).
+    responses_pct : pd.DataFrame
+        Rows = doses, columns = channels (1–8), values = % response.
+
+    Returns
+    -------
+    fit_params : dict  {channel: {'bottom', 'top', 'ec50', 'n'} or None}
+    fit_curves : dict  {channel: (x_fine, y_fine) or None}
+    """
+    x = np.array(conc, dtype=float)
+    x_fine = np.logspace(np.log10(x.min()), np.log10(x.max()), 200)
+
+    fit_params = {}
+    fit_curves = {}
+
+    for ch in CHANNEL_COLS:
+        y = responses_pct[ch].values.astype(float)
+
+        # Skip channels with all-NaN or flat response
+        if np.all(np.isnan(y)) or np.ptp(y[~np.isnan(y)]) < 1:
+            fit_params[ch] = None
+            fit_curves[ch] = None
+            continue
+
+        # Initial guesses: bottom ~ min, top ~ max, EC50 ~ geometric midpoint, n = 1
+        p0 = [np.nanmin(y), np.nanmax(y), np.sqrt(x.min() * x.max()), 1.0]
+        bounds = (
+            [-10,   0,   x.min() * 0.01, 0.1],
+            [50,  150,  x.max() * 100,  10.0],
+        )
+
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                popt, _ = curve_fit(
+                    hill_equation, x, y,
+                    p0=p0, bounds=bounds,
+                    maxfev=5000
+                )
+            fit_params[ch] = {
+                'bottom': popt[0],
+                'top':    popt[1],
+                'ec50':   popt[2],
+                'n':      popt[3],
+            }
+            fit_curves[ch] = (x_fine, hill_equation(x_fine, *popt))
+        except Exception:
+            fit_params[ch] = None
+            fit_curves[ch] = None
+
+    return fit_params, fit_curves
+
+
+def summarise_ec50(fit_params, label=""):
+    """Print EC50 summary table for all channels."""
+    print(f"\n{'─'*50}")
+    print(f"  EC50 summary — {label}")
+    print(f"{'─'*50}")
+    print(f"  {'Channel':<10} {'EC50 (uM)':<14} {'Emax (%)':<12} {'Hill n'}")
+    print(f"  {'─'*7:<10} {'─'*9:<14} {'─'*8:<12} {'─'*6}")
+    for ch in CHANNEL_COLS:
+        p = fit_params.get(ch)
+        if p:
+            print(f"  Ch {ch:<7} {p['ec50']:<14.4f} {p['top']:<12.1f} {p['n']:.2f}")
+        else:
+            print(f"  Ch {ch:<7} {'fit failed':<14} {'—':<12} {'—'}")
+    print(f"{'─'*50}\n")
+    
 # ── Main analysis ─────────────────────────────────────────────────────────────
 
 def analyse_experiment(df, phe_mode, phe_labels, ach_labels, snp_labels, l):
