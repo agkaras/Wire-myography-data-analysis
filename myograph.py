@@ -10,15 +10,11 @@ Edit INPUT_FILE, OUTPUT_DIR and the settings block below, then run:
 """
 
 from pathlib import Path
-import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-<<<<<<< HEAD
-=======
 import matplotlib.ticker as ticker
->>>>>>> 04258a3e3706cf1c814a8d1b9d027b8726ac9856
 from scipy.optimize import curve_fit
 
 plt.rcParams.update({
@@ -29,8 +25,8 @@ plt.rcParams.update({
 # =============================================================================
 #Load file: insert full path of the txt file for analysis and desired output directory
 # =============================================================================
-INPUT_FILE = '//Users/agnieszkakaras/Wire-myography-data-analysis/sample_data.txt'
-OUTPUT_DIR = '/Users/agnieszkakaras/output'
+INPUT_FILE = '/.../sample_data.txt'
+OUTPUT_DIR = '/.../output'
 
 CHANNEL_COLS = [1, 2, 3, 4, 5, 6, 7, 8]
 
@@ -119,93 +115,8 @@ def compute_cumulative_relaxation(df, dose_labels, end_label):
              else _find_row(df, end_label))
         records.append(baseline - df.iloc[s:e][CHANNEL_COLS].min())
     return pd.DataFrame(records, index=dose_labels)
-# =============================================================================
-# Curve fitting functions
-# =============================================================================
 
-<<<<<<< HEAD
-def hill_equation(x, bottom, top, ec50, n):
-    """4-parameter logistic (Hill) equation for dose-response fitting."""
-    return bottom + (top - bottom) / (1 + (ec50 / x) ** n)
-
-
-def fit_dose_response(conc, responses_pct):
-    """
-    Fit Hill equation to dose-response data for each channel.
-
-    Parameters
-    ----------
-    conc : list of float
-        Concentrations (same units as PHE_CONC / ACH_CONC / SNP_CONC).
-    responses_pct : pd.DataFrame
-        Rows = doses, columns = channels (1–8), values = % response.
-
-    Returns
-    -------
-    fit_params : dict  {channel: {'bottom', 'top', 'ec50', 'n'} or None}
-    fit_curves : dict  {channel: (x_fine, y_fine) or None}
-    """
-    x = np.array(conc, dtype=float)
-    x_fine = np.logspace(np.log10(x.min()), np.log10(x.max()), 200)
-
-    fit_params = {}
-    fit_curves = {}
-
-    for ch in CHANNEL_COLS:
-        y = responses_pct[ch].values.astype(float)
-
-        # Skip channels with all-NaN or flat response
-        if np.all(np.isnan(y)) or np.ptp(y[~np.isnan(y)]) < 1:
-            fit_params[ch] = None
-            fit_curves[ch] = None
-            continue
-
-        # Initial guesses: bottom ~ min, top ~ max, EC50 ~ geometric midpoint, n = 1
-        p0 = [np.nanmin(y), np.nanmax(y), np.sqrt(x.min() * x.max()), 1.0]
-        bounds = (
-            [-10,   0,   x.min() * 0.01, 0.1],
-            [50,  150,  x.max() * 100,  10.0],
-        )
-
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                popt, _ = curve_fit(
-                    hill_equation, x, y,
-                    p0=p0, bounds=bounds,
-                    maxfev=5000
-                )
-            fit_params[ch] = {
-                'bottom': popt[0],
-                'top':    popt[1],
-                'ec50':   popt[2],
-                'n':      popt[3],
-            }
-            fit_curves[ch] = (x_fine, hill_equation(x_fine, *popt))
-        except Exception:
-            fit_params[ch] = None
-            fit_curves[ch] = None
-
-    return fit_params, fit_curves
-
-
-def summarise_ec50(fit_params, label=""):
-    """Print EC50 summary table for all channels."""
-    print(f"\n{'─'*50}")
-    print(f"  EC50 summary — {label}")
-    print(f"{'─'*50}")
-    print(f"  {'Channel':<10} {'EC50 (uM)':<14} {'Emax (%)':<12} {'Hill n'}")
-    print(f"  {'─'*7:<10} {'─'*9:<14} {'─'*8:<12} {'─'*6}")
-    for ch in CHANNEL_COLS:
-        p = fit_params.get(ch)
-        if p:
-            print(f"  Ch {ch:<7} {p['ec50']:<14.4f} {p['top']:<12.1f} {p['n']:.2f}")
-        else:
-            print(f"  Ch {ch:<7} {'fit failed':<14} {'—':<12} {'—'}")
-    print(f"{'─'*50}\n")
-=======
 # ── Curve fitting functions ──────────────────────────────────────────────────────────────
->>>>>>> 04258a3e3706cf1c814a8d1b9d027b8726ac9856
 
 def hill_equation(x, bottom, top, ec50, n):
     """4-parameter logistic (Hill) equation for dose-response fitting."""
@@ -352,15 +263,7 @@ def analyse_experiment(df, phe_mode, phe_labels, ach_labels, snp_labels, l):
     result_df.attrs['snp_%']      = snp_pct
     result_df.attrs['phe_%']      = phe_pct
     result_df.attrs['phe_labels'] = phe_labels if phe_mode == 'dose_response' else None
-    # Fit dose-response curves
-    phe_fit_params, phe_fit_curves = fit_dose_response(PHE_CONC, phe_pct) if phe_pct is not None else ({}, {})
-    ach_fit_params, ach_fit_curves = fit_dose_response(ACH_CONC, ach_pct)
-    snp_fit_params, snp_fit_curves = fit_dose_response(SNP_CONC, snp_pct)
-    
-    result_df.attrs['phe_fit'] = (phe_fit_params, phe_fit_curves)
-    result_df.attrs['ach_fit'] = (ach_fit_params, ach_fit_curves)
-    result_df.attrs['snp_fit'] = (snp_fit_params, snp_fit_curves)
-    
+
     return result_df
 
 
@@ -389,12 +292,6 @@ def plot_summary(results, filename):
         ax_phe.set_ylim(*_ylim(phe_pct.values))
         ax_phe.xaxis.set_major_formatter(ticker.LogFormatterSciNotation())
         ax_phe.legend(fontsize=8, ncol=2, frameon=False)
-        
-        phe_fit_params, phe_fit_curves = results.attrs.get('phe_fit', ({}, {}))
-        for i, ch in enumerate(range(1, 9)):
-            curve = phe_fit_curves.get(ch)
-            if curve:
-                ax_phe.plot(curve[0], curve[1], '-', color=CH_COLORS[i], alpha=0.4, linewidth=1)
     else:
         phe_max_pct = results.loc['Phe_3uM_%_KCl']
         bars = ax_phe.bar([f'Ch {ch}' for ch in range(1, 9)], phe_max_pct.values,
@@ -422,11 +319,7 @@ def plot_summary(results, filename):
     ax_ach.invert_yaxis()
     ax_ach.xaxis.set_major_formatter(ticker.LogFormatterSciNotation())
     ax_ach.legend(fontsize=8, ncol=2, frameon=False, loc='lower left')
-    ach_fit_params, ach_fit_curves = results.attrs.get('ach_fit', ({}, {}))
-    for i, ch in enumerate(range(1, 9)):
-        curve = ach_fit_curves.get(ch)
-        if curve:
-            ax_ach.plot(curve[0], curve[1], '-', color=CH_COLORS[i], alpha=0.4, linewidth=1)
+
     # ── SNP relaxation ────────────────────────────────────────────────────────
     snp_pct = results.attrs['snp_%']
     for i, ch in enumerate(range(1, 9)):
@@ -442,11 +335,6 @@ def plot_summary(results, filename):
     ax_snp.invert_yaxis()
     ax_snp.xaxis.set_major_formatter(ticker.LogFormatterSciNotation())
     ax_snp.legend(fontsize=8, ncol=2, frameon=False, loc='lower left')
-    snp_fit_params, snp_fit_curves = results.attrs.get('snp_fit', ({}, {}))
-    for i, ch in enumerate(range(1, 9)):
-        curve = snp_fit_curves.get(ch)
-        if curve:
-            ax_snp.plot(curve[0], curve[1], '-', color=CH_COLORS[i], alpha=0.4, linewidth=1)
 
     # ── KCl 60 mM barplot ────────────────────────────────────────────────────
     kcl = results.attrs['kcl60']
@@ -491,12 +379,6 @@ if __name__ == '__main__':
 
     print('Running analysis ...')
     results = analyse_experiment(df, PHE_MODE, PHE_LABELS, ACH_LABELS, SNP_LABELS, LABELS)
-    phe_fp, _ = results.attrs.get('phe_fit', ({}, {}))
-    ach_fp, _ = results.attrs.get('ach_fit', ({}, {}))
-    snp_fp, _ = results.attrs.get('snp_fit', ({}, {}))
-    summarise_ec50(phe_fp, label="Phenylephrine")
-    summarise_ec50(ach_fp, label="Acetylcholine")
-    summarise_ec50(snp_fp, label="SNP")
     print(f'Results table: {results.shape[0]} metrics x {results.shape[1]} channels\n')
     print(results.to_string())
     print()
