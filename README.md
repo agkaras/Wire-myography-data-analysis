@@ -21,9 +21,9 @@ All results land in a single DataFrame (and one Excel sheet): absolute values in
 
 ```
 myograph_colab.ipynb    — Google Colab notebook (upload/download via browser)
-python/myograph.py      — standalone Python script (command line)
-R/myograph.R            — R script (RStudio)
-sample_data.txt    — sample LabChart export for testing
+myograph.py             — standalone Python script (command line)
+myograph.R              — R script (RStudio)
+sample_data.txt         — sample LabChart export for testing
 ```
 
 ## Usage
